@@ -1,6 +1,10 @@
 # django-watch
 
-A set of tools for simple load testing and real-time logging.
+Simple and useful django middleware for real-time logging.
+
+```no-highlight
+https://github.com/Sobolev5/django-watch
+```
 
 # How to use it
 

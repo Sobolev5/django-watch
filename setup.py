@@ -3,17 +3,13 @@ import sys
 import setuptools
 
 __author__ = 'Sobolev Andrey <email.asobolev@gmail.com>'
-__version__ = '0.1.0'
+__version__ = '0.1.3'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py django_watch upload')
-    sys.exit()
-
 setuptools.setup(
-    name='django-watch-Sobolev5',
+    name='django-watch',
     version=__version__,
     install_requires=['termcolor>=1.1.0', 'django>=1.11'],
     author='Sobolev Andrey',
@@ -27,5 +23,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.4',
 )
