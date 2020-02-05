@@ -27,7 +27,7 @@ Open your development console and see the result:
 kwargs: {'news_id': '2'}
 request.GET: <QueryDict: {'published_at': ['today']}>
 
-""" END START /my_project/news/views.py => news_list: Line number 15 """
+""" END /my_project/news/views.py => news_list: Line number 15 """
 sql queries time: 0.17
 total time: 7.29
 ```
