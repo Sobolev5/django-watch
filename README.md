@@ -13,9 +13,23 @@ To install run:
 pip install django-watch
 ```
 
-Add the following lines at the end of **settings.py** file
+
+Add the following lines at the end of **settings.py** file:
 ```python
 INSTALLED_APPS = INSTALLED_APPS + ('django_watch',)
 MIDDLEWARE = ( MIDDLEWARE + ('django_watch.middleware.WatchMiddleware',) )  
 ```
+
+
+Open your development console and see the result:
+```python
+""" START /my_project/news/views.py => news_list: Line number 15 """
+kwargs: {'news_id': '2'}
+request.GET: <QueryDict: {'published_at': ['today']}>
+
+""" END START /my_project/news/views.py => news_list: Line number 15 """
+sql queries time: 0.17
+total time: 7.29
+```
+
 That's all.

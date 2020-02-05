@@ -32,9 +32,9 @@ class WatchMiddleware:
     def process_view(self, request, func, args, kwargs):                 
         func = unwrap(func)      
         if hasattr(func, '__code__'):
-            process_stdout = f'\n""" START {func.__code__.co_filename} => {func.__name__}: Line number {func.__code__.co_firstlineno}"""'
-            request.django_watch_process_stdout = process_stdout.replace('START','END')[:]
-            if args: process_stdout += f'\nargs: {args}='
+            process_stdout = f'\n""" START {func.__code__.co_filename} => {func.__name__}: Line number {func.__code__.co_firstlineno} """'
+            request.django_watch_process_stdout = process_stdout.replace('START','END')
+            if args: process_stdout += f'\nargs: {args}'
             if kwargs: process_stdout += f'\nkwargs: {kwargs}' 
             if request.GET: process_stdout += f'\nrequest.GET: {request.GET}'
             if request.POST: process_stdout += f'\nrequest.POST: {request.POST}'
