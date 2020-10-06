@@ -51,8 +51,8 @@ class WatchMiddleware:
     def process_view(self, request, func, args, kwargs):                 
         func = unwrap(func)   
         if hasattr(func, '__code__'):
-            process_stdout_start = f'\n{self.GREEN}START {func.__code__.co_filename} :: {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END} {self.GREEN}::{self.END} {self.LIGHT_BLUE}{self.ITALIC}Line number {func.__code__.co_firstlineno} {self.END}'
-            request.process_stdout_end = f'\n{self.YELLOW}END {func.__code__.co_filename} :: {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END} {self.YELLOW}:: Line number {func.__code__.co_firstlineno} {self.END}'
+            process_stdout_start = f'\n{self.GREEN}START {func.__code__.co_filename} :: {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END}{self.END} {self.GREEN}::{self.END} {self.LIGHT_BLUE}{self.ITALIC}Line number {func.__code__.co_firstlineno} {self.END}{self.END}'
+            request.process_stdout_end = f'\n{self.YELLOW}END {func.__code__.co_filename} :: {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END}{self.END} {self.YELLOW}:: Line number {func.__code__.co_firstlineno} {self.END}'
             if args: 
                 print_part = f'args: {args}'
                 if len(print_part) > 200:
@@ -85,6 +85,6 @@ class WatchMiddleware:
     def process_exception(self, request, exception):
         if hasattr(request, 'process_stdout_end') and request.process_stdout_end: 
             exception_stdout = request.process_stdout_end   
-            exception_stdout += f'\n{self.RED}{self.BOLD}Exception :: {exception}{self.END}'
+            exception_stdout += f'\n{self.RED}{self.BOLD}Exception :: {exception}{self.END}{self.END}'
             print(exception_stdout)
  
