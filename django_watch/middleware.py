@@ -36,24 +36,19 @@ class WatchMiddleware:
         self.CROSSED = "\033[9m"
         self.END = "\033[0m"
 
-
     def __call__(self, request):
         response = None
-
         time_start = time.monotonic()     
         response = self.get_response(request)
-
         if hasattr(response, "status_code") and response.status_code in [200, 201] and hasattr(request, "process_stdout_end") and request.process_stdout_end:
             process_stdout_end = request.process_stdout_end            
             process_stdout_end += f"{self.YELLOW} • Total time • {round((time.monotonic() - time_start), 2)}s{self.END}"        
             print(process_stdout_end)      
         return response
 
-
     def process_view(self, request, func, args, kwargs):                 
         func = unwrap(func)   
         if hasattr(func, "__code__"):
-
             process_stdout_start = f"\n{self.GREEN}START {func.__code__.co_filename} • {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END}{self.END} {self.GREEN}•{self.END} {self.LIGHT_BLUE}Line number {func.__code__.co_firstlineno}{self.END}"
             request.process_stdout_end = f"\n{self.YELLOW}{self.BOLD}END {func.__code__.co_filename} • {self.END}{self.RED}{self.BOLD}{func.__name__}{self.END}{self.END}"
             
@@ -79,7 +74,6 @@ class WatchMiddleware:
                 else:
                     process_stdout_start += f"\n{self.PURPLE}%s{self.END}" % print_part                                                        
             print(process_stdout_start) 
-  
 
     def process_exception(self, request, exception):
         if hasattr(request, "process_stdout_end") and request.process_stdout_end: 
