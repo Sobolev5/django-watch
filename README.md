@@ -32,9 +32,11 @@ sql queries time: 0.17
 total time: 7.29
 ```
 
-That's all.
+## TODO
+```python
+typing
+__doc__ strings
+```
 
-## P.S.
-Try my free service for developers [Workhours.space](https://workhours.space/). 
-It's time tracker with simple interface, powerful functionality such as automatic payroll calculation, 
-telegram bot timer, easy web2 and web3 auth and more. Enjoy. 
+# Try my free time tracker
+My free time tracker for developers [Workhours.space](https://workhours.space/). 
