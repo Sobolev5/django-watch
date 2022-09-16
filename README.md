@@ -24,11 +24,11 @@ MIDDLEWARE = ( MIDDLEWARE + ('django_watch.middleware.WatchMiddleware',) )
 Open your development console and see the result:
 ```python
 
-""" START /my_project/news/views.py • news_list • Line number 15 """
+START /my_project/news/views.py • news_list • Line number 15 """
 kwargs: {'news_id': '2'}
 request.GET: <QueryDict: {'published_at': ['today']}>
 
-""" END /my_project/news/views.py • news_list • Total time • 0.35s"""
+END /my_project/news/views.py • news_list • Total time • 0.35s"""
 ```
 
 ## TODO
