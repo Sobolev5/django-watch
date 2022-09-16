@@ -16,8 +16,9 @@ pip install django-watch
 
 Add the following lines at the end of **settings.py** file:
 ```python
-INSTALLED_APPS = INSTALLED_APPS + ('django_watch',)
-MIDDLEWARE = ( MIDDLEWARE + ('django_watch.middleware.WatchMiddleware',) )  
+if DEBUG:
+    INSTALLED_APPS = INSTALLED_APPS + ('django_watch',)
+    MIDDLEWARE = ( MIDDLEWARE + ('django_watch.middleware.WatchMiddleware',) )  
 ```
 
 
