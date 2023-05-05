@@ -41,11 +41,10 @@ class WatchMiddleware:
         response = None
         time_start = time.monotonic()    
         response = self.get_response(request)
-
         if hasattr(response, "status_code") and hasattr(request, "process_stdout_end") and request.process_stdout_end:
             process_stdout_end = request.process_stdout_end            
             process_stdout_end += f"{self.YELLOW} • STATUS {response.status_code} • Total time • {round((time.monotonic() - time_start), 2)}s{self.END}"        
-   
+            print(process_stdout_end)
         return response
 
     def process_view(self, request, func, args, kwargs):                 
