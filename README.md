@@ -1,6 +1,6 @@
 # django-watch
 
-Simple and useful django middleware for real-time logging.
+Light and useful django middleware for real-time logging in development.
 
 ```no-highlight
 https://github.com/Sobolev5/django-watch
@@ -25,11 +25,24 @@ if DEBUG:
 Open your development console and see the result:
 ```python
 
-START /my_project/news/views.py • news_list • Line number 15 """
-kwargs: {'news_id': '2'}
-request.GET: <QueryDict: {'published_at': ['today']}>
-
-END /my_project/news/views.py • news_list • Total time • 0.35s"""
+| START GET /profiles/views.py | • todo_list_view • Line number 1934
+| request.GET: <QueryDict: {'a': ['b']}>
+| Exception
+| TRACEBACK:
+Traceback (most recent call last):
+  File "handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/profiles/decorators.py", line 158, in inner_decorator
+    return function(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/main/decorators.py", line 111, in wrapper
+    response = func(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/userprofiles/views.py", line 1991, in todo_list_view
+    print(undef)
+          ^^^^^^
+NameError: name 'undef' is not defined
 ```
 
 ## TODO
@@ -37,6 +50,3 @@ END /my_project/news/views.py • news_list • Total time • 0.35s"""
 typing
 __doc__ strings
 ```
-
-# Try my free time tracker
-My free time tracker for developers [Workhours.space](https://workhours.space/). 
