@@ -50,25 +50,25 @@ class WatchMiddleware:
     def process_view(self, request, func, args, kwargs):                 
         func = unwrap(func)   
         if hasattr(func, "__code__"):
-            process_stdout_start = f"\n| {self.GREEN}START {request.method} {func.__code__.co_filename} {self.END}| • {self.GREEN}{self.BOLD}{func.__name__}{self.END}{self.END} {self.GREEN}•{self.END} {self.GREEN}Line number {func.__code__.co_firstlineno}{self.END}"
-            request.process_stdout_end = f"\n| {self.YELLOW}{self.BOLD}END {request.method} {func.__code__.co_filename} {self.END}| • {self.YELLOW}{self.BOLD}{func.__name__}{self.END}{self.END}"
+            process_stdout_start = f"\n░░ {self.GREEN}START {request.method} {func.__code__.co_filename} {self.END}| • {self.GREEN}{self.BOLD}{func.__name__}{self.END}{self.END} {self.GREEN}•{self.END} {self.GREEN}Line number {func.__code__.co_firstlineno}{self.END}"
+            request.process_stdout_end = f"\n░░ {self.YELLOW}{self.BOLD}END {request.method} {func.__code__.co_filename} {self.END}| • {self.YELLOW}{self.BOLD}{func.__name__}{self.END}{self.END}"
             
             print(process_stdout_start)
             if args: 
-                print(f"| args: {args}"[:200])
+                print(f"░░░░ args: {args}"[:200])
             if kwargs: 
-                print(f"| kwargs: {kwargs}"[:200])
+                print(f"░░░░ kwargs: {kwargs}"[:200])
             if request.GET:
-                print(f"| request.GET: {request.GET}"[:200])                
+                print(f"░░░░ request.GET: {request.GET}"[:200])                
             if request.POST: 
-                print(f"| request.POST: {request.POST}"[:200])
+                print(f"░░░░ request.POST: {request.POST}"[:200])
                 
             try:
                 if not request.POST and request.body:
-                    print(f"| request.body: {request.body}"[:200])
+                    print(f"░░░░ request.body: {request.body}"[:200])
             except Exception as e:
                 pass
             
     def process_exception(self, request, exception):
-        print(f"{self.RED}{self.BOLD}| Exception{self.END}{self.END}")
-        print( "| TRACEBACK:\n{}".format( "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))))
+        print(f"{self.RED}{self.BOLD}░ Exception{self.END}{self.END}")
+        print( "░░░░ TRACEBACK:\n{}".format( "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))))
