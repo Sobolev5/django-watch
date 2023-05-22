@@ -25,28 +25,9 @@ if DEBUG:
 Open your development console and see the result:
 ```python
 
-| START GET /profiles/views.py | • todo_list_view • Line number 1934
-| request.GET: <QueryDict: {'a': ['b']}>
-| Exception
-| TRACEBACK:
-Traceback (most recent call last):
-  File "handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/profiles/decorators.py", line 158, in inner_decorator
-    return function(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/main/decorators.py", line 111, in wrapper
-    response = func(*args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/userprofiles/views.py", line 1991, in todo_list_view
-    print(undef)
-          ^^^^^^
-NameError: name 'undef' is not defined
+░░ GET main/views.py  • profile • Line number 191
+
+░░ GET main/views.py  • profile [  OK  ] • STATUS 200 • Total time • 8.92s
 ```
 
-## TODO
-```python
-typing
-__doc__ strings
-```
+

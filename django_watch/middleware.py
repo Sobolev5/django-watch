@@ -50,8 +50,8 @@ class WatchMiddleware:
     def process_view(self, request, func, args, kwargs):                 
         func = unwrap(func)   
         if hasattr(func, "__code__"):
-            process_stdout_start = f"\n░░ {self.GREEN}START {request.method} {func.__code__.co_filename} {self.END} • {self.GREEN}{self.BOLD}{func.__name__}{self.END}{self.END} {self.GREEN}•{self.END} {self.GREEN}Line number {func.__code__.co_firstlineno}{self.END}"
-            request.process_stdout_end = f"\n░░ {self.YELLOW}{self.BOLD}END {request.method} {func.__code__.co_filename} {self.END} • {self.YELLOW}{self.BOLD}{func.__name__}{self.END}{self.END}"
+            process_stdout_start = f"\n░░ {self.BOLD}{request.method} {func.__code__.co_filename} {self.END} • {self.GREEN}{func.__name__}{self.END} • {self.YELLOW}Line number {func.__code__.co_firstlineno}{self.END}"
+            request.process_stdout_end = f"\n░░ {self.BOLD}{request.method} {func.__code__.co_filename} {self.END} • {self.GREEN}{func.__name__} [  OK  ]{self.END}"
             
             print(process_stdout_start)
             if args: 
