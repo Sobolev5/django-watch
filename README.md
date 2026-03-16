@@ -1,33 +1,49 @@
 # django-watch
 
-Light and useful django middleware for real-time logging in development.
+Lightweight Django middleware for real-time request logging during development.
 
-```no-highlight
-https://github.com/Sobolev5/django-watch
-```
+Prints the resolved view's source file, function name, line number, HTTP status,
+and wall-clock timing straight to your terminal — no extra configuration required.
 
-# How to use it
+## Installation
 
-To install run:
-```no-highlight
+```bash
 pip install django-watch
 ```
 
+## Quick start
 
-Add the following lines at the end of **settings.py** file:
+Add the middleware at the end of your `settings.py`:
+
 ```python
 if DEBUG:
-    INSTALLED_APPS = INSTALLED_APPS + ('django_watch',)
-    MIDDLEWARE = ( MIDDLEWARE + ('django_watch.middleware.WatchMiddleware',) )  
+    INSTALLED_APPS += ("django_watch",)
+    MIDDLEWARE += ("django_watch.middleware.WatchMiddleware",)
 ```
 
+Open your development console and you will see output like this:
 
-Open your development console and see the result:
-```python
+```
+░░ GET main/views.py • profile • Line 191
+░░░░ kwargs: {'username': 'sobolev'}
 
-░░ GET main/views.py  • profile • Line number 191
-
-░░ GET main/views.py  • profile [  OK  ] • STATUS 200 • Total time • 8.92s
+░░ GET main/views.py • profile [  OK  ] • STATUS 200 • Total time • 0.12s
 ```
 
+## What it logs
 
+| Phase             | Information                                                     |
+| ----------------- | --------------------------------------------------------------- |
+| **Before view**   | HTTP method, source file, view function, line number            |
+| **Request data**  | `args`, `kwargs`, `GET`, `POST`, and raw `body` (truncated)     |
+| **After view**    | Status code and total request time                              |
+| **On exception**  | Full Python traceback highlighted in red                        |
+
+## Requirements
+
+- Python 3.8+
+- Django 3.2+
+
+## License
+
+MIT
