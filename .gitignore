@@ -1,2 +1,34 @@
+# Virtual environments
 .venv/
-django_watch.egg-info
+venv/
+env/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Byte-compiled / cached
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# uv
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
