@@ -1,4 +1,5 @@
 import time
+import threading
 import traceback
 import resource
 from collections import Counter
@@ -26,10 +27,9 @@ def unwrap(func):
 class WatchMiddleware:
     """Django middleware that logs view dispatch details and timing to stdout.
 
-    For every request that reaches a view, the middleware prints the resolved
-    view's source file, function name, line number, arguments, query / POST /
-    body payloads, SQL query stats, selected request headers, response size,
-    and memory delta.
+    Each request/response pair is printed in a matching ANSI colour so that
+    nested or interleaved requests are easy to follow visually.  Colours
+    rotate automatically across a palette of six.
 
     Intended for **local development only** — the output uses ANSI escape
     codes and is not suitable for production log aggregators.
@@ -46,38 +46,45 @@ class WatchMiddleware:
             ]
     """
 
-    BLACK = "\033[0;30m"
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BROWN = "\033[0;33m"
-    BLUE = "\033[0;34m"
-    PURPLE = "\033[0;35m"
-    CYAN = "\033[0;36m"
-    LIGHT_GRAY = "\033[0;37m"
-    DARK_GRAY = "\033[1;30m"
-    LIGHT_RED = "\033[1;31m"
-    LIGHT_GREEN = "\033[1;32m"
-    YELLOW = "\033[1;33m"
-    LIGHT_BLUE = "\033[1;34m"
-    LIGHT_PURPLE = "\033[1;35m"
-    LIGHT_CYAN = "\033[1;36m"
-    LIGHT_WHITE = "\033[1;37m"
     BOLD = "\033[1m"
     FAINT = "\033[2m"
-    ITALIC = "\033[3m"
-    UNDERLINE = "\033[4m"
-    BLINK = "\033[5m"
-    NEGATIVE = "\033[7m"
-    CROSSED = "\033[9m"
     END = "\033[0m"
 
-    _GUTTER = "░░"
-    _GUTTER_DEEP = "░░░░"
+    LIGHT_RED = "\033[1;31m"
+
+    # Colour palette for request/response pair rotation.
+    _PALETTE = (
+        ("\033[0;32m",  "🟢"),  # green
+        ("\033[0;36m",  "🔵"),  # cyan
+        ("\033[0;34m",  "🟣"),  # blue
+        ("\033[0;35m",  "🩵"),  # purple
+        ("\033[1;36m",  "⚪"),  # light cyan
+        ("\033[1;32m",  "💚"),  # light green
+        ("\033[1;34m",  "💙"),  # light blue
+        ("\033[1;35m",  "💜"),  # light purple
+    )
+
     _MAX_PRINT_LEN = 200
     _LOGGED_HEADERS = ("Authorization", "Content-Type", "Accept", "X-Requested-With")
+    _LOGGED_RESPONSE_HEADERS = ("Content-Type", "Location", "Cache-Control", "Set-Cookie", "X-Frame-Options")
+
+    _color_lock = threading.Lock()
+    _color_index = 0
 
     def __init__(self, get_response=None):
         self.get_response = get_response
+
+    @classmethod
+    def _next_color(cls):
+        """Return the next colour and emoji from the rotating palette (thread-safe).
+
+        Returns:
+            A tuple of (ANSI escape string, emoji string) for this pair.
+        """
+        with cls._color_lock:
+            pair = cls._PALETTE[cls._color_index % len(cls._PALETTE)]
+            cls._color_index += 1
+            return pair
 
     def __call__(self, request):
         """Process the request/response cycle and print timing, SQL, memory,
@@ -97,42 +104,63 @@ class WatchMiddleware:
 
         if not (
             hasattr(response, "status_code")
-            and getattr(request, "process_stdout_end", None)
+            and getattr(request, "_watch_color", None)
         ):
             return response
 
+        c = request._watch_color
+        emoji = request._watch_emoji
         elapsed = round(time.monotonic() - time_start, 2)
         mem_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         mem_delta_kb = mem_after - mem_before
 
+        # --- SQL stats ---------------------------------------------------
         queries_after = connection.queries[queries_before:]
         sql_count = len(queries_after)
         sql_time = round(sum(float(q.get("time", 0)) for q in queries_after), 3)
         sql_dupes = self._count_duplicate_queries(queries_after)
 
+        # --- Response size -----------------------------------------------
         content_type = response.get("Content-Type", "?")
         content_length = response.get("Content-Length") or self._guess_length(response)
 
+        # --- Summary line ------------------------------------------------
+        status = response.status_code
         parts = [
-            f"{self.YELLOW}STATUS {response.status_code}{self.END}",
+            f"STATUS {status}",
             f"{elapsed}s",
-            f"{self.CYAN}SQL {sql_count}q/{sql_time}s{self.END}",
+            f"SQL {sql_count}q/{sql_time}s",
         ]
         if sql_dupes:
-            parts.append(f"{self.LIGHT_RED}{sql_dupes} dupes{self.END}")
-        parts.append(f"{self.PURPLE}{self._fmt_bytes(content_length)} {content_type}{self.END}")
+            parts.append(f"{self.LIGHT_RED}{sql_dupes} dupes{c}")
+        parts.append(f"{self._fmt_bytes(content_length)} {content_type}")
         if mem_delta_kb:
-            parts.append(f"{self.BLUE}mem Δ{mem_delta_kb:+d}KB{self.END}")
+            parts.append(f"mem Δ{mem_delta_kb:+d}KB")
 
         summary = " • ".join(parts)
-        print(f"{request.process_stdout_end} • {summary}")
+        print(
+            f"{c}{emoji} {self.BOLD}{request.method} "
+            f"{request._watch_filename}{self.END}{c} • "
+            f"{request._watch_funcname} [  OK  ] • {summary}{self.END}"
+        )
+
+        # --- Response headers --------------------------------------------
+        resp_header_pairs = []
+        for name in self._LOGGED_RESPONSE_HEADERS:
+            value = response.get(name)
+            if value:
+                display = f"{value[:60]}…" if len(str(value)) > 60 else value
+                resp_header_pairs.append(f"{name}: {display}")
+        if resp_header_pairs:
+            self._print_colored(c, f"  {emoji} response headers", " | ".join(resp_header_pairs))
 
         return response
 
     def process_view(self, request, func, args, kwargs):
         """Called just before Django invokes the view.
 
-        Logs the source location, input data, and selected request headers.
+        Assigns a colour to this request and logs the source location,
+        input data, and selected request headers in that colour.
 
         Args:
             request: The incoming ``HttpRequest``.
@@ -148,31 +176,32 @@ class WatchMiddleware:
         if not hasattr(func, "__code__"):
             return None
 
+        c, emoji = self._next_color()
         code = func.__code__
-        header = (
-            f"\n{self._GUTTER} {self.BOLD}{request.method} "
-            f"{code.co_filename}{self.END} • "
-            f"{self.GREEN}{func.__name__}{self.END} • "
-            f"{self.YELLOW}Line {code.co_firstlineno}{self.END}"
-        )
-        request.process_stdout_end = (
-            f"\n{self._GUTTER} {self.BOLD}{request.method} "
-            f"{code.co_filename}{self.END} • "
-            f"{self.GREEN}{func.__name__} [  OK  ]{self.END}"
+
+        request._watch_color = c
+        request._watch_emoji = emoji
+        request._watch_filename = code.co_filename
+        request._watch_funcname = func.__name__
+
+        print(
+            f"\n{c}{emoji} {self.BOLD}{request.method} "
+            f"{code.co_filename}{self.END}{c} • "
+            f"{func.__name__} • Line {code.co_firstlineno}{self.END}"
         )
 
-        print(header)
-        self._print_truncated("args", args)
-        self._print_truncated("kwargs", kwargs)
-        self._print_truncated("request.GET", request.GET)
-        self._print_truncated("request.POST", request.POST)
+        self._print_colored(c, f"  {emoji} args", args)
+        self._print_colored(c, f"  {emoji} kwargs", kwargs)
+        self._print_colored(c, f"  {emoji} request.GET", request.GET)
+        self._print_colored(c, f"  {emoji} request.POST", request.POST)
 
         try:
             if not request.POST and request.body:
-                self._print_truncated("request.body", request.body)
+                self._print_colored(c, f"  {emoji} request.body", request.body)
         except Exception:
             pass
 
+        # --- Selected request headers ------------------------------------
         header_pairs = []
         for name in self._LOGGED_HEADERS:
             value = request.META.get(f"HTTP_{name.upper().replace('-', '_')}")
@@ -182,14 +211,14 @@ class WatchMiddleware:
                 display = f"{value[:12]}…" if name == "Authorization" else value
                 header_pairs.append(f"{name}: {display}")
         if header_pairs:
-            self._print_truncated("headers", " | ".join(header_pairs))
+            self._print_colored(c, f"  {emoji} headers", " | ".join(header_pairs))
 
         return None
 
     def process_exception(self, request, exception):
         """Called when a view raises an unhandled exception.
 
-        Prints a full traceback coloured in red.
+        Prints a full traceback using the same colour assigned to this request.
 
         Args:
             request: The incoming ``HttpRequest``.
@@ -198,25 +227,30 @@ class WatchMiddleware:
         Returns:
             ``None`` — Django's default exception handling continues.
         """
-        print(f"{self.RED}{self.BOLD}{self._GUTTER} Exception{self.END}")
+        print(f"{self.LIGHT_RED}{self.BOLD}❌ Exception{self.END}")
         tb_text = "".join(
             traceback.format_exception(
                 type(exception), exception, exception.__traceback__,
             )
         )
-        print(f"{self._GUTTER_DEEP} TRACEBACK:\n{tb_text}")
+        print(f"{self.LIGHT_RED}  ❌ TRACEBACK:\n{tb_text}{self.END}")
         return None
 
-    def _print_truncated(self, label, value):
-        """Print a labelled value, truncating long representations.
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _print_colored(self, color, label, value):
+        """Print a labelled value in the given ANSI colour, truncated.
 
         Args:
+            color: ANSI escape sequence for the pair colour.
             label: A short description shown before the value.
-            value: Any object whose ``repr`` should be printed.
+            value: Any object whose string form should be printed.
         """
         if value:
-            line = f"{self._GUTTER_DEEP} {label}: {value}"
-            print(line[: self._MAX_PRINT_LEN])
+            line = f"{color}{label}: {value}{self.END}"
+            print(line[: self._MAX_PRINT_LEN + len(color) + len(self.END)])
 
     @staticmethod
     def _count_duplicate_queries(queries):

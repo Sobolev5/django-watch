@@ -29,20 +29,34 @@ Open your development console and you will see output like this:
 ░░░░ kwargs: {'username': 'sobolev'}
 ░░░░ headers: Content-Type: application/json | Accept: */*
 
-░░ GET main/views.py • profile [  OK  ] • STATUS 200 • 0.12s • SQL 5q/0.03s • 1 dupes • 2.4KB text/html • mem Δ+128KB
+░░ GET main/views.py • profile [  OK  ]
+░░░░ response headers: Content-Type: text/html | Cache-Control: max-age=0
+░░ ... • STATUS 200 • 0.12s • SQL 5q/0.03s • 1 dupes • 2.4KB text/html • mem Δ+128KB
 ```
 
 ## What it logs
 
-| Phase            | Information                                                                  |
-| ---------------- | ---------------------------------------------------------------------------- |
-| **Before view**  | HTTP method, source file, view function, line number                         |
-| **Request data** | `args`, `kwargs`, `GET`, `POST`, raw `body` (truncated)                      |
-| **Headers**      | `Authorization` (masked), `Content-Type`, `Accept`, `X-Requested-With`       |
-| **After view**   | Status code, total time, response size and `Content-Type`                    |
-| **SQL**          | Query count, total query time, duplicate query count (N+1 detection)         |
-| **Memory**       | RSS delta before/after view                                                  |
-| **On exception** | Full Python traceback highlighted in red                                     |
+| Phase                | Information                                                                  |
+| -------------------- | ---------------------------------------------------------------------------- |
+| **Before view**      | HTTP method, source file, view function, line number                         |
+| **Request data**     | `args`, `kwargs`, `GET`, `POST`, raw `body` (truncated)                      |
+| **Request headers**  | `Authorization` (masked), `Content-Type`, `Accept`, `X-Requested-With`       |
+| **Response headers** | `Content-Type`, `Location`, `Cache-Control`, `Set-Cookie`, `X-Frame-Options` |
+| **After view**       | Status code, total time, response size                                       |
+| **SQL**              | Query count, total query time, duplicate query count (N+1 detection)         |
+| **Memory**           | RSS delta before/after view                                                  |
+| **On exception**     | Full Python traceback highlighted in red                                     |
+
+## Running tests
+
+```bash
+uv sync
+uv run pytest -v
+```
+
+The test suite uses an in-memory SQLite database and covers the full middleware
+chain: view resolution logging, SQL query counting with duplicate detection,
+request header output, response metadata, and exception tracebacks.
 
 ## Requirements
 
