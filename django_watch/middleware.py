@@ -171,23 +171,40 @@ class WatchMiddleware:
         Returns:
             ``None`` — processing continues normally.
         """
+        # For class-based views, extract the class name before unwrapping.
+        view_class = getattr(func, "view_class", None) or getattr(func, "cls", None)
         func = unwrap(func)
 
         if not hasattr(func, "__code__"):
             return None
 
         c, emoji = self._next_color()
-        code = func.__code__
+
+        if view_class:
+            # Resolve the actual handler (get, post, etc.) from the user's class.
+            handler_name = request.method.lower()
+            handler = getattr(view_class, handler_name, None)
+            if handler and hasattr(handler, "__code__"):
+                code = handler.__code__
+            else:
+                code = func.__code__
+            display_name = f"{view_class.__name__}.{handler_name}"
+        elif "." in getattr(func, "__qualname__", ""):
+            code = func.__code__
+            display_name = func.__qualname__
+        else:
+            code = func.__code__
+            display_name = func.__name__
 
         request._watch_color = c
         request._watch_emoji = emoji
         request._watch_filename = code.co_filename
-        request._watch_funcname = func.__name__
+        request._watch_funcname = display_name
 
         print(
             f"\n{c}{emoji} {self.BOLD}{request.method} "
             f"{code.co_filename}{self.END}{c} • "
-            f"{func.__name__} • Line {code.co_firstlineno}{self.END}"
+            f"{display_name} • Line {code.co_firstlineno}{self.END}"
         )
 
         self._print_colored(c, f"  {emoji} args", args)

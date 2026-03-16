@@ -117,6 +117,11 @@ class TestMiddlewareCall:
         out = capture_and_show(capfd)
         assert "simple_view" in out
 
+    def test_cbv_shows_class_name(self, client, capfd):
+        client.get("/cbv/")
+        out = capture_and_show(capfd)
+        assert "ClassBasedView" in out
+
     def test_stdout_contains_status_code(self, client, capfd):
         client.get("/simple/")
         out = capture_and_show(capfd)
